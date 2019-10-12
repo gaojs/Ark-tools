@@ -346,7 +346,8 @@ struct _CONTEXT64
 #define CONTEXT64_FLOATING_POINT  (CONTEXT_AMD64 | 0x8L)
 #define CONTEXT64_DEBUG_REGISTERS (CONTEXT_AMD64 | 0x10L)
 #define CONTEXT64_FULL (CONTEXT64_CONTROL | CONTEXT64_INTEGER | CONTEXT64_FLOATING_POINT)
-#define CONTEXT64_ALL (CONTEXT64_CONTROL | CONTEXT64_INTEGER | CONTEXT64_SEGMENTS | CONTEXT64_FLOATING_POINT | CONTEXT64_DEBUG_REGISTERS)
+#define CONTEXT64_ALL (CONTEXT64_CONTROL | CONTEXT64_INTEGER | CONTEXT64_SEGMENTS \
+		| CONTEXT64_FLOATING_POINT | CONTEXT64_DEBUG_REGISTERS)
 #define CONTEXT64_XSTATE (CONTEXT_AMD64 | 0x20L)
 
 #pragma pack(pop)
@@ -362,12 +363,18 @@ extern "C"
 	__declspec(SPEC)DWORD64 __cdecl X64Call(DWORD64 func, int argC, ...);
 	__declspec(SPEC)DWORD64 __cdecl GetModuleHandle64(wchar_t* lpModuleName);
 	__declspec(SPEC)DWORD64 __cdecl GetProcAddress64(DWORD64 hModule, char* funcName);
-	__declspec(SPEC)SIZE_T __cdecl VirtualQueryEx64(HANDLE hProcess, DWORD64 lpAddress, MEMORY_BASIC_INFORMATION64* lpBuffer, SIZE_T dwLength);
-	__declspec(SPEC)DWORD64 __cdecl VirtualAllocEx64(HANDLE hProcess, DWORD64 lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect);
-	__declspec(SPEC)BOOL __cdecl VirtualFreeEx64(HANDLE hProcess, DWORD64 lpAddress, SIZE_T dwSize, DWORD dwFreeType);
-	__declspec(SPEC)BOOL __cdecl VirtualProtectEx64(HANDLE hProcess, DWORD64 lpAddress, SIZE_T dwSize, DWORD flNewProtect, DWORD* lpflOldProtect);
-	__declspec(SPEC)BOOL __cdecl ReadProcessMemory64(HANDLE hProcess, DWORD64 lpBaseAddress, LPVOID lpBuffer, SIZE_T nSize, SIZE_T *lpNumberOfBytesRead);
-	__declspec(SPEC)BOOL __cdecl WriteProcessMemory64(HANDLE hProcess, DWORD64 lpBaseAddress, LPVOID lpBuffer, SIZE_T nSize, SIZE_T *lpNumberOfBytesWritten);
+	__declspec(SPEC)SIZE_T __cdecl VirtualQueryEx64(HANDLE hProcess, DWORD64 lpAddress,
+		MEMORY_BASIC_INFORMATION64* lpBuffer, SIZE_T dwLength);
+	__declspec(SPEC)DWORD64 __cdecl VirtualAllocEx64(HANDLE hProcess, DWORD64 lpAddress, 
+		SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect);
+	__declspec(SPEC)BOOL __cdecl VirtualFreeEx64(HANDLE hProcess, DWORD64 lpAddress,
+		SIZE_T dwSize, DWORD dwFreeType);
+	__declspec(SPEC)BOOL __cdecl VirtualProtectEx64(HANDLE hProcess, DWORD64 lpAddress,
+		SIZE_T dwSize, DWORD flNewProtect, DWORD* lpflOldProtect);
+	__declspec(SPEC)BOOL __cdecl ReadProcessMemory64(HANDLE hProcess, DWORD64 lpBaseAddress,
+		LPVOID lpBuffer, SIZE_T nSize, SIZE_T *lpNumberOfBytesRead);
+	__declspec(SPEC)BOOL __cdecl WriteProcessMemory64(HANDLE hProcess, DWORD64 lpBaseAddress,
+		LPVOID lpBuffer, SIZE_T nSize, SIZE_T *lpNumberOfBytesWritten);
 	__declspec(SPEC)BOOL __cdecl GetThreadContext64(HANDLE hThread, _CONTEXT64* lpContext);
 	__declspec(SPEC)BOOL __cdecl SetThreadContext64(HANDLE hThread, _CONTEXT64* lpContext);
 	__declspec(SPEC)VOID __cdecl SetLastErrorFromX64Call(DWORD64 status);
