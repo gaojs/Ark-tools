@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by Wow64Injectx64.rc
+// Used by Wow64InjectX64.rc
 //
 
 #define IDS_APP_TITLE			103

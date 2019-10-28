@@ -1,4 +1,4 @@
-// Wow64Injectx64.cpp : 定义控制台应用程序的入口点。
+// Wow64InjectX64.cpp : 定义控制台应用程序的入口点。
 #include "stdafx.h"
 #include "Wow64Injectx64.h"
 #include <memory>
@@ -42,7 +42,7 @@ unsigned char shell_code[] = {
 	0xff, 0xd0                                                  // call      rax
 };
 
-enum InjectResult{
+enum struct InjectResult{
 	OK,
 	Error_NoSuchFile,
 	Error_OpenProcess,
@@ -52,30 +52,30 @@ enum InjectResult{
 	Error_CreateRemoteThread,
 };
 
-InjectResult Wow64Injectx64(DWORD processId, const TCHAR* filePath)
+InjectResult Wow64InjectX64(DWORD processId, const TCHAR* filePath)
 {	
 	if (!PathFileExists(filePath))
 	{
-		return Error_NoSuchFile;
+		return InjectResult::Error_NoSuchFile;
 	}
 
-	HANDLE handle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, processId);
-	if (INVALID_HANDLE_VALUE == handle)
+	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, processId);
+	if (INVALID_HANDLE_VALUE == hProcess)
 	{
-		return Error_OpenProcess;
+		return InjectResult::Error_OpenProcess;
 	}
 
 	size_t filePathLen = (size_t)::_tcslen(filePath);
 	size_t paramSize = (filePathLen+1) * sizeof(TCHAR)
 		+ sizeof(UNICODE_STRING) + sizeof(DWORD64);
-	DWORD64 pMemAddr = (DWORD64)VirtualAllocEx64(handle,
+	DWORD64 pMemAddr = (DWORD64)VirtualAllocEx64(hProcess,
 		NULL, paramSize, MEM_COMMIT, PAGE_READWRITE);
 	size_t shellCodeLen = sizeof(shell_code);
-	DWORD64  pShellAddr = (DWORD64)VirtualAllocEx64(handle,
+	DWORD64  pShellAddr = (DWORD64)VirtualAllocEx64(hProcess,
 		NULL, shellCodeLen, MEM_COMMIT,PAGE_EXECUTE_READWRITE);
 	if ((!pMemAddr) || (!pShellAddr))
 	{
-		return Error_VirtualAllocEx;
+		return InjectResult::Error_VirtualAllocEx;
 	}
 	
 	char * pMemLocal = new char[paramSize];
@@ -93,7 +93,7 @@ InjectResult Wow64Injectx64(DWORD processId, const TCHAR* filePath)
 	DWORD64 rtlExitThread = GetProcAddress64(ntdll64,"RtlExitUserThread");
 	if (NULL == ldrLoadDll || NULL==rtlCreateUserThread || NULL==rtlExitThread)
 	{
-		return Error_GetProcAddress;
+		return InjectResult::Error_GetProcAddress;
 	}
 
 	//r9
@@ -103,16 +103,16 @@ InjectResult Wow64Injectx64(DWORD processId, const TCHAR* filePath)
 	DWORD64 ptr = pMemAddr + sizeof(DWORD64);
 	memcpy(shell_code+42, &ptr, sizeof(PUNICODE_STRING));
 
-	//LdrLoaddll
+	//LdrLoadDll
 	memcpy(shell_code+72, &ldrLoadDll, sizeof(DWORD64));
 
 	//RtlExitUserThread
 	memcpy(shell_code+94, &rtlExitThread, sizeof(DWORD64));
 	size_t write_size = 0;
-	if (!WriteProcessMemory64(handle, pMemAddr, pMemLocal, paramSize, NULL) ||
-		!WriteProcessMemory64(handle, pShellAddr, shell_code, shellCodeLen, NULL))
+	if (!WriteProcessMemory64(hProcess, pMemAddr, pMemLocal, paramSize, NULL) ||
+		!WriteProcessMemory64(hProcess, pShellAddr, shell_code, shellCodeLen, NULL))
 	{
-		return Error_WriteProcessMemory;
+		return InjectResult::Error_WriteProcessMemory;
 	}
 	DWORD64 hRemoteThread = 0;
 	struct {
@@ -120,7 +120,7 @@ InjectResult Wow64Injectx64(DWORD processId, const TCHAR* filePath)
 		DWORD64 UniqueThread;
 	} clientId;
 	DWORD64 ret = X64Call(rtlCreateUserThread, 10,
-		(DWORD64)handle,					// ProcessHandle
+		(DWORD64)hProcess,					// ProcessHandle
 		(DWORD64)NULL,                      // SecurityDescriptor
 		(DWORD64)FALSE,                     // CreateSuspended
 		(DWORD64)0,                         // StackZeroBits
@@ -132,9 +132,9 @@ InjectResult Wow64Injectx64(DWORD processId, const TCHAR* filePath)
 		(DWORD64)&clientId);               // ClientID)
 	if (INVALID_HANDLE_VALUE == (HANDLE)hRemoteThread)
 	{
-		return Error_CreateRemoteThread;
+		return InjectResult::Error_CreateRemoteThread;
 	}
-	return OK;
+	return InjectResult::OK;
 }
 
 int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
@@ -143,8 +143,8 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 	ULONG_PTR processID = 0;
 	cin >> processID;
 
-	WCHAR filePath[] = L"D:\\MyLib64.dll";
-	if (OK == Wow64Injectx64(processID, filePath))
+	WCHAR filePath[] = L"D:\\conDll64.dll";
+	if (InjectResult::OK == Wow64InjectX64(processID, filePath))
 	{
 		printf("Inject Success!\n");
 	}
